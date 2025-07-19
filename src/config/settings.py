@@ -2,12 +2,12 @@
 Application configuration and settings.
 """
 
-import os
+from pathlib import Path
 
 # Application Information
 APP_NAME = "Cowriter"
 APP_VERSION = "1.0.0"
-APP_AUTHOR = "Your Name"
+APP_AUTHOR = "DevOpsJeremy"
 
 # Window Settings
 WINDOW_TITLE = APP_NAME
@@ -19,10 +19,11 @@ WINDOW_MIN_HEIGHT = 400
 # Theme Settings
 THEME = "dark"  # "light" or "dark"
 
-# Paths
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-ASSETS_DIR = os.path.join(os.path.dirname(__file__), "..", "assets")
-CONFIG_DIR = os.path.join(os.path.dirname(__file__))
+# Paths - Using pathlib for better cross-platform compatibility
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+SRC_DIR = PROJECT_ROOT / "src"
+ASSETS_DIR = SRC_DIR / "assets"
+CONFIG_DIR = SRC_DIR / "config"
 
 # Logging
 LOG_LEVEL = "INFO"

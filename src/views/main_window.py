@@ -5,7 +5,8 @@ Main window class for the application.
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import logging
-from ..config.settings import *
+import sv_ttk
+from ..config import settings
 
 class MainWindow:
     """Main application window."""
@@ -232,18 +233,21 @@ class MainWindow:
         
     def toggle_theme(self):
         """Toggle between light and dark themes."""
-        import sv_ttk
-        current_theme = sv_ttk.get_theme()
-        new_theme = "light" if current_theme == "dark" else "dark"
-        sv_ttk.set_theme(new_theme)
-        self.set_status(f"Switched to {new_theme} theme")
-        self.logger.info(f"Theme changed to {new_theme}")
+        try:
+            current_theme = sv_ttk.get_theme()
+            new_theme = "light" if current_theme == "dark" else "dark"
+            sv_ttk.set_theme(new_theme)
+            self.set_status(f"Switched to {new_theme} theme")
+            self.logger.info(f"Theme changed to {new_theme}")
+        except Exception as e:
+            messagebox.showerror("Theme Error", f"Failed to change theme: {e}")
+            self.logger.error(f"Theme change failed: {e}")
         
     def show_about(self):
         """Show about dialog."""
-        about_text = f"""{APP_NAME}
-Version {APP_VERSION}
-By {APP_AUTHOR}
+        about_text = f"""{settings.APP_NAME}
+Version {settings.APP_VERSION}
+By {settings.APP_AUTHOR}
 
 A modern Python desktop application built with tkinter and the Sun Valley theme."""
         

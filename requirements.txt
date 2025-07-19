@@ -1,1 +1,5 @@
+# GUI Theme
 sv-ttk==2.6.0
+
+# Build tools (optional - only needed for building executable)
+# pyinstaller>=5.0.0

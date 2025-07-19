@@ -1,0 +1,69 @@
+# Multi-stage Docker build for cross-compiling Windows executable on Linux
+
+FROM python:3.11-slim as wine-base
+
+# Install Wine and dependencies
+RUN dpkg --add-architecture i386 && \
+    apt-get update && \
+    apt-get install -y \
+        wine64 \
+        wine32 \
+        winetricks \
+        xvfb \
+        wget \
+        && rm -rf /var/lib/apt/lists/*
+
+# Set up Wine environment
+ENV WINEARCH=win64
+ENV WINEPREFIX=/root/.wine
+ENV DISPLAY=:99
+
+# Initialize Wine (headless)
+RUN Xvfb :99 -screen 0 1024x768x16 & \
+    sleep 2 && \
+    winecfg && \
+    wineserver -w
+
+# Install Python in Wine
+RUN Xvfb :99 -screen 0 1024x768x16 & \
+    sleep 2 && \
+    wget -q https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe && \
+    wine python-3.11.0-amd64.exe /quiet InstallAllUsers=1 PrependPath=1 && \
+    wineserver -w
+
+# Install PyInstaller and common packages in Wine
+RUN Xvfb :99 -screen 0 1024x768x16 & \
+    sleep 2 && \
+    wine python -m pip install --upgrade pip && \
+    wine python -m pip install pyinstaller && \
+    wineserver -w
+
+FROM wine-base as builder
+
+WORKDIR /app
+COPY requirements.txt .
+
+# Install project dependencies
+RUN Xvfb :99 -screen 0 1024x768x16 & \
+    sleep 2 && \
+    wine python -m pip install -r requirements.txt && \
+    wineserver -w
+
+COPY . .
+
+# Build the Windows executable
+RUN Xvfb :99 -screen 0 1024x768x16 & \
+    sleep 2 && \
+    wine pyinstaller \
+        --windowed \
+        --onefile \
+        --name Cowriter \
+        --distpath /app/dist \
+        --workpath /app/build \
+        --specpath /app \
+        src/__main__.py && \
+    wineserver -w
+
+# Final stage - just the executable
+FROM scratch as export
+COPY --from=builder /app/dist/Cowriter.exe /Cowriter.exe
