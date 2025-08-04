@@ -90,6 +90,8 @@ class Application:
         
     def run(self):
         """Start the application main loop."""
+        print("Something")
+        self.logger.info("Something")
         try:
             self.logger.info("Starting application main loop")
             self.root.mainloop()
