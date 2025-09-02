@@ -6,7 +6,7 @@ Main entry point for Cowriter when run as a package.
 import sys
 import os
 
-from .app import Application
+from cowriter.app import Application
 
 def main():
     """Main function to start the application."""

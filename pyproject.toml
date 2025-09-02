@@ -25,13 +25,13 @@ Repository = "https://github.com/DevOpsJeremy/cowriter"
 Issues = "https://github.com/DevOpsJeremy/cowriter/issues"
 
 [project.scripts]
-cowriter = "src.__main__:main"
+cowriter = "cowriter.__main__:main"
 
 [project.gui-scripts]
 cowriter-gui = "src.__main__:main"
 
 [tool.hatch.version]
-path = "src/__init__.py"
+path = "src/cowriter/__init__.py"
 
 [tool.hatch.metadata.hooks.requirements_txt]
 filename = "requirements.txt"
@@ -40,11 +40,11 @@ filename = "requirements.txt"
 sources = ["src"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["cowriter"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-  "/src",
+  "cowriter",
   "/tests",
   "/requirements.txt",
   "/README.md"
