@@ -1,5 +1,5 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        Title="Cowriter WPF App" Height="500" Width="900">
+        Title="Cowriter" Height="500" Width="900">
   <Grid Margin="12">
     <!-- Define three columns -->
     <Grid.ColumnDefinitions>
@@ -34,7 +34,7 @@
           <ColumnDefinition />
           <ColumnDefinition />
         </Grid.ColumnDefinitions>
-        <TextBlock Grid.Column="0" TextAlignment="Center">Zoom</TextBlock>
+        <TextBlock Name="ZoomText" Tag="text" Grid.Column="0" TextAlignment="Center">Zoom</TextBlock>
         <ToolBar Grid.Column="1" Margin="0,0,0,8">
           <Button Width="30" Name="ZoomInButton" ToolTip="Zoom In">+</Button>
           <Button Width="30" Name="ZoomOutButton" ToolTip="Zoom Out">−</Button>

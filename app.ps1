@@ -73,5 +73,7 @@ $numberButton.Add_Click({
 })
 #>
 
+$ollama_download_link = 'https://ollama.com/download/OllamaSetup.exe'
+
 # Show window
 $window.ShowDialog()
