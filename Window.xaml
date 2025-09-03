@@ -1,0 +1,70 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        Title="Cowriter WPF App" Height="500" Width="900">
+  <Grid Margin="12">
+    <!-- Define three columns -->
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="200"/>
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition MaxWidth="275"/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- Left: File tree (TreeView with ScrollViewer) -->
+    <ScrollViewer Grid.Column="0" Grid.Row="0" VerticalScrollBarVisibility="Auto">
+      <TreeView Name="FileTree">
+        <TreeViewItem Header="Project">
+          <TreeViewItem Header="File1.txt"/>
+          <TreeViewItem Header="File2.txt"/>
+        </TreeViewItem>
+        <TreeViewItem Header="Documents">
+          <TreeViewItem Header="Doc1.md"/>
+        </TreeViewItem>
+      </TreeView>
+    </ScrollViewer>
+
+    <Grid Grid.Column="1" Grid.Row="0" Margin="8,0,8,0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="40"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="0"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- Formatting Toolbar (place inside Grid.Column="1" Grid.Row="0" above the RichTextBox) -->
+      <ToolBar Grid.Column="1" Grid.Row="0" Margin="0,0,0,8">
+        <Button FontFamily="Times New Roman" Width="30" Name="BoldButton" ToolTip="Bold"><TextBlock FontWeight="Bold">B</TextBlock></Button>
+        <Button FontFamily="Times New Roman" Width="30" Name="ItalicButton" ToolTip="Italic"><TextBlock FontStyle="Italic">I</TextBlock></Button>
+        <Button Width="30" Name="UnderlineButton" ToolTip="Underline"><TextBlock TextDecorations="Underline">U</TextBlock></Button>
+        <Separator/>
+        <Button Width="30" Name="BulletButton" ToolTip="Bulleted List" Visibility="Hidden">• —</Button>
+        <Button Width="30" Name="NumberButton" ToolTip="Numbered List" Visibility="Hidden">1.</Button>
+      </ToolBar>
+      <!-- Center: Large scrollable TextBox with line numbers -->
+        <!-- Line numbers -->
+        <TextBlock Name="LineNumbers" Grid.Column="0" Grid.Row="1" Margin="0,0,2,0" VerticalAlignment="Top" TextAlignment="Right"/>
+        <!-- Main TextBox -->
+        <ScrollViewer Grid.Column="1" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+          <RichTextBox Name="MainText" AcceptsReturn="True"  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+        </ScrollViewer>
+    </Grid>
+
+    <!-- Right: Chat area -->
+    <Grid Grid.Column="2" Grid.Row="0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+      <!-- (Optional) Chat history area could go here in Row 0 -->
+      <!-- Chat input and send button at the bottom -->
+      <StackPanel Grid.Row="1" Orientation="Horizontal">
+        <TextBox Name="ChatInput" Width="180" Height="30" Margin="5,0,5,0"/>
+        <Button Name="SendButton" Content="Send" Width="80" Height="30"/>
+      </StackPanel>
+    </Grid>
+  </Grid>
+</Window>
