@@ -12,18 +12,35 @@
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
-    <!-- Left: File tree (TreeView with ScrollViewer) -->
-    <ScrollViewer Grid.Column="0" Grid.Row="0" VerticalScrollBarVisibility="Auto">
-      <TreeView Name="FileTree">
-        <TreeViewItem Header="Project">
-          <TreeViewItem Header="File1.txt"/>
-          <TreeViewItem Header="File2.txt"/>
-        </TreeViewItem>
-        <TreeViewItem Header="Documents">
-          <TreeViewItem Header="Doc1.md"/>
-        </TreeViewItem>
-      </TreeView>
-    </ScrollViewer>
+    <Grid Grid.Row="0" Margin="8,0,8,0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="40"/>
+      </Grid.RowDefinitions>
+      <!-- Left: File tree (TreeView with ScrollViewer) -->
+      <ScrollViewer Grid.Column="0" Grid.Row="0" VerticalScrollBarVisibility="Auto">
+        <TreeView Name="FileTree">
+          <TreeViewItem Header="Project">
+            <TreeViewItem Header="File1.txt"/>
+            <TreeViewItem Header="File2.txt"/>
+          </TreeViewItem>
+          <TreeViewItem Header="Documents">
+            <TreeViewItem Header="Doc1.md"/>
+          </TreeViewItem>
+        </TreeView>
+      </ScrollViewer>
+      <Grid Grid.Row="1" Margin="0,3,0,3">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition />
+          <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0" TextAlignment="Center">Zoom</TextBlock>
+        <ToolBar Grid.Column="1" Margin="0,0,0,8">
+          <Button Width="30" Name="ZoomInButton" ToolTip="Zoom In">+</Button>
+          <Button Width="30" Name="ZoomOutButton" ToolTip="Zoom Out">−</Button>
+        </ToolBar>
+      </Grid>
+    </Grid>
 
     <Grid Grid.Column="1" Grid.Row="0" Margin="8,0,8,0">
       <Grid.RowDefinitions>
@@ -35,7 +52,7 @@
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
 
-      <!-- Formatting Toolbar (place inside Grid.Column="1" Grid.Row="0" above the RichTextBox) -->
+      <!-- Formatting Toolbar -->
       <ToolBar Grid.Column="1" Grid.Row="0" Margin="0,0,0,8">
         <Button FontFamily="Times New Roman" Width="30" Name="BoldButton" ToolTip="Bold"><TextBlock FontWeight="Bold">B</TextBlock></Button>
         <Button FontFamily="Times New Roman" Width="30" Name="ItalicButton" ToolTip="Italic"><TextBlock FontStyle="Italic">I</TextBlock></Button>
@@ -60,6 +77,17 @@
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
       <!-- (Optional) Chat history area could go here in Row 0 -->
+      <!-- Chat history area (scrollable) -->
+      <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Name="ChatScroll">
+        <StackPanel Name="ChatHistory" Margin="0,0,0,8">
+          <Border Background="#D0F0FF" CornerRadius="10" Padding="8" Margin="4" HorizontalAlignment="Right" MaxWidth="200">
+            <TextBlock Text="You: Hello!" TextWrapping="Wrap"/>
+          </Border>
+          <Border Background="#E0E0E0" CornerRadius="10" Padding="8" Margin="4" HorizontalAlignment="Left" MaxWidth="200">
+            <TextBlock Text="Me: Hi there!" TextWrapping="Wrap"/>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
       <!-- Chat input and send button at the bottom -->
       <StackPanel Grid.Row="1" Orientation="Horizontal">
         <TextBox Name="ChatInput" Width="180" Height="30" Margin="5,0,5,0"/>
