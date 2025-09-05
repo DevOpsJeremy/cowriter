@@ -1,11 +1,11 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        Title="Cowriter" Height="500" Width="900"
-        FontSize="16">
+        Title="Cowriter" SizeToContent='WidthAndHeight' 
+        FontSize="16" Topmost='True'>
 
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
-      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
     <Menu Grid.Row="0">
@@ -38,7 +38,7 @@
         <ColumnDefinition MaxWidth="275"/>
       </Grid.ColumnDefinitions>
       <Grid.RowDefinitions>
-        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
@@ -94,8 +94,9 @@
         <!-- Center: Large scrollable TextBox with line numbers -->
           <!-- Line numbers -->
           <TextBlock Name="LineNumbers" Grid.Column="0" Grid.Row="1" Margin="0,0,2,0" VerticalAlignment="Top" TextAlignment="Right"/>
+          
           <!-- Main TextBox -->
-          <ScrollViewer Grid.Column="1" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+          <ScrollViewer Grid.Column="1" Grid.Row="1" VerticalScrollBarVisibility="Auto" MinHeight="500">
             <RichTextBox Name="MainText" AcceptsReturn="True"  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
           </ScrollViewer>
       </Grid>
