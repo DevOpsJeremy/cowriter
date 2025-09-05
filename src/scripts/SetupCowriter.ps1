@@ -7,14 +7,12 @@ param (
     [string] $Ref = 'main',
     [string] $Script = 'src/scripts/setup.ps1',
     # TODO: Remove
-    [string] $Authentication = 'Bearer',
-    [SecureString] $Token
+    [string] $Authorization
 )
 Begin {
     # TODO: Remove
     $PSDefaultParameterValues = @{
-        'Invoke-RestMethod:Authentication' = $Authentication
-        'Invoke-RestMethod:Token'         = $Token
+        'Invoke-RestMethod:Headers' = @{ Authorization = $Authorization }
     }
     #region Functions
     function ConvertTo-Base64String {
@@ -35,6 +33,9 @@ Process {
         "$Repo/$Ref/$Script"
     ).Uri
     $script = Invoke-RestMethod $uri -ErrorAction Stop
+    if (-not $?) {
+        exit 1
+    }
     $encoded = ConvertTo-Base64String $script
     Start-Process (Get-Command powershell).Source @("-EncodedCommand", "$encoded", "-WindowStyle", "Minimized")
 }

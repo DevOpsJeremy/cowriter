@@ -1,5 +1,4 @@
 #requires -Version 5.1
-#Requires -Assembly PresentationFramework
 using namespace System.Windows
 using namespace System.Windows.Controls
 
@@ -8,6 +7,9 @@ param (
     [uri] $OllamaDownloadUrl = 'https://ollama.com/download/OllamaSetup.exe'
 )
 Begin {
+    # Add the Windows Presentation Foundation framework for the window
+    Add-Type -Assembly PresentationFramework
+
     #region Functions
     function Get-RemoteFileSize {
         [CmdletBinding()]
