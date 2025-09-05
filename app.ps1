@@ -73,7 +73,35 @@ $numberButton.Add_Click({
 })
 #>
 
-$ollama_download_link = 'https://ollama.com/download/OllamaSetup.exe'
+$chatHistory = $window.FindName('ChatHistory')
+function Add-ChatBubble {
+    [CmdletBinding()]
+    param (
+        [string] $Message,
+        [System.Windows.Media.SolidColorBrush] $Background = [System.Windows.Media.Brushes]::LightBlue,
+        [System.Windows.Controls.StackPanel] $ChatPanel,
+        [int] $CornerRadius = 10,
+        [int] $Padding = 8,
+        [int] $Margin = 4,
+        [System.Windows.HorizontalAlignment] $HorizontalAlignment = 'Right',
+        [int] $MaxWidth = 200,
+        [System.Windows.TextWrapping] $TextWrapping = 'Wrap'
+    )
+    $ChatPanel.AddChild(
+        [System.Windows.Controls.Border] @{
+            CornerRadius = $CornerRadius
+            Padding = $Padding
+            Margin = $Margin
+            HorizontalAlignment = $HorizontalAlignment
+            Background = $Background
+            MaxWidth = $MaxWidth
+            Child = [System.Windows.Controls.TextBlock] @{
+                Text = $Message
+                TextWrapping = $TextWrapping
+            }
+        }
+    )
+}
 
 # Show window
 $window.ShowDialog()
