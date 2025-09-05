@@ -1,10 +1,11 @@
 #requires -Version 5.1
 using namespace System.Windows
 using namespace System.Windows.Controls
+using namespace System.Collections
 
 [CmdletBinding()]
 param (
-    [uri] $OllamaDownloadUrl = 'https://ollama.com/download/OllamaSetup.exe'
+    [uri] $OllamaDownloadUrl = 'https://github.com/ollama/ollama/releases/latest/download/OllamaSetup.exe'
 )
 Begin {
     # Add the Windows Presentation Foundation framework for the window
@@ -61,7 +62,7 @@ Begin {
             . $script:setPageContent -Page $newPage
             $script:content.Tag['Page'] = $newPage
         }
-        $closeWindow = { $window.Close() }
+        $script:closeWindow = { $script:window.Close() }
         #endregion Scripts
 
         # Create the window
@@ -78,6 +79,7 @@ Begin {
             }
         }
 
+        #region Main Content
         # Grids for the main area + navigation buttons
         $grid = [Grid]::new()
         # Page
@@ -126,14 +128,98 @@ Begin {
         }
 
         # Dependencies page
-        $dependenciesPage = [StackPanel] @{
+        $script:dependenciesPage = [StackPanel] @{
             Margin = 10
             Orientation = "Vertical"
             VerticalAlignment = "Stretch"
+            Tag = @{
+                OutstandingDependencies = @()
+            }
         }
 
+        $script:checkModule = {
+            # Check that the Cowriter module (this) is installed
+            $module = Get-Module -Name 'Cowriter' -ListAvailable
+            if (-not $module) {
+                return $false
+            }
+            return $true
+        }
+        $script:checkOllama = {
+            # Check that `ollama.exe` is found and in $PATH
+            $ollama = Get-Command 'ollama' -ErrorAction SilentlyContinue
+            if (-not $ollama) {
+                return $false
+            }
+            return $true
+        }
+        $script:checkModel = {
+            $ollama = Get-Command 'ollama' -ErrorAction SilentlyContinue
+            if (-not $ollama) {
+                return $false
+            }
+            # List models - `ollama ls`
+            $models = & $ollama.Source ls
+            # If 1 element is returned, its the header row:
+            # NAME  ID  SIZE  MODIFIED
+            #
+            # Any additional rows are models
+            if ($models.Count -le 1) {
+                return $false
+            }
+            return $true
+        }
+        $script:depHash = [Ordered] @{
+            module = @{
+                Name = 'Cowriter'
+                Script = $script:checkModule
+            }
+            ollama = @{
+                Name = 'Ollama'
+                Script = $script:checkOllama
+            }
+            model = @{
+                Name = 'AI Model'
+                Script = $script:checkModel
+            }
+        }
+        # Check if we've already checked for dependencies
+        # if we have, don't check again
+        $script:dependenciesChecked = $false
+        $script:checkDependencies = {
+            if ($script:dependenciesChecked) {
+                return
+            }
+            $script:satisfiedDependenciesList.Items.Clear()
+            $script:unsatisfiedDependenciesList.Items.Clear()
+            $depStatus = @{}
+            foreach ($dependency in $script:depHash.GetEnumerator()) {
+                $depStatus[$dependency.Key] = & $dependency.Value['Script']
+            }
+            foreach ($dependency in $depStatus.GetEnumerator()) {
+                switch ($dependency.Value) {
+                    $true {
+                        $script:satisfiedDependenciesList.Items.Add($script:depHash[$dependency.Key]['Name'])
+                    }
+                    $false {
+                        $script:dependenciesPage.Tag['OutstandingDependencies'] += $dependency.Key
+                        $script:unsatisfiedDependenciesList.Items.Add($script:depHash[$dependency.Key]['Name'])
+                    }
+                }
+            }
+            if ($script:satisfiedDependenciesList.Items.Count -gt 0) {
+                $script:satisfiedDependencies.Visibility = "Visible"
+            }
+            if ($script:unsatisfiedDependenciesList.Items.Count -gt 0) {
+                $script:unsatisfiedDependencies.Visibility = "Visible"
+            }
+            $script:dependenciesChecked = $true
+        }
+        # Check the dependencies at launch to save processing time
+        $window.Add_Loaded({ . $script:checkDependencies })
+
         # Dependencies already installed/satisfied
-        $satisfiedDependencies = [StackPanel] @{
+        $script:satisfiedDependencies = [StackPanel] @{
             # Hide by default. This is unhidden if dependencies are found to be installed
             Visibility = "Hidden"
         }
@@ -141,14 +227,11 @@ Begin {
             Text = "The following dependencies are already installed"
             FontWeight = "Bold"
         })
-        $satisfiedDependenciesList = [ListBox]::new()
-        [void] $satisfiedDependenciesList.Items.Add("Cowriter module")
-        [void] $satisfiedDependenciesList.Items.Add("Ollama")
-        [void] $satisfiedDependenciesList.Items.Add("AI model")
+        $script:satisfiedDependenciesList = [ListBox]::new()
         [void] $satisfiedDependencies.Children.Add($satisfiedDependenciesList)
         
         # Dependencies not yet installed/satisfied
-        $unsatisfiedDependencies = [StackPanel] @{
+        $script:unsatisfiedDependencies = [StackPanel] @{
             Margin = "0,30,0,0"
             # Hide by default. This is unhidden if dependencies are found to not be installed
             Visibility = "Hidden"
@@ -157,10 +240,7 @@ Begin {
             Text = "The following dependencies will be installed"
             FontWeight = "Bold"
         })
-        $unsatisfiedDependenciesList = [ListBox]::new()
-        [void] $unsatisfiedDependenciesList.Items.Add("Cowriter module")
-        [void] $unsatisfiedDependenciesList.Items.Add("Ollama")
-        [void] $unsatisfiedDependenciesList.Items.Add("AI model")
+        $script:unsatisfiedDependenciesList = [ListBox]::new()
         [void] $unsatisfiedDependencies.Children.Add($unsatisfiedDependenciesList)
 
         # Assemble dependencies page
@@ -249,6 +329,7 @@ Begin {
         }
         [void] $cancelButton.Add_Click($closeWindow)
         [void] $buttonPanel.Children.Add($cancelButton)
+        #endregion Main Content
 
         # Set the first page content to start
         . $setPageContent -Page 0

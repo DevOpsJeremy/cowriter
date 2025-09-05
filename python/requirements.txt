@@ -1,6 +1,0 @@
-# GUI Theme
-sv-ttk
-cowriter
-
-# Build tools (optional - only needed for building executable)
-# pyinstaller>=5.0.0
