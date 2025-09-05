@@ -5,7 +5,7 @@ param (
     [string] $UriHost = 'raw.githubusercontent.com',
     [string] $Repo = 'DevOpsJeremy/cowriter',
     [string] $Ref = 'main',
-    [string] $Script = 'setup.ps1',
+    [string] $Script = 'src/scripts/setup.ps1',
     # TODO: Remove
     [string] $Authentication = 'Bearer',
     [SecureString] $Token

@@ -25,22 +25,9 @@ Begin {
         )
 
         #region Functions
-        function Set-PageContent {
-            [CmdletBinding()]
-            param (
-                [Parameter(Mandatory, Position=0)]
-                [int] $Page,
-                [Parameter(Mandatory)]
-                [array] $Pages,
-                [Parameter(Mandatory)]
-                [PSObject] $TitleControl,
-                [Parameter(Mandatory)]
-                [PSObject] $ContentControl
-            )
-            $pageHash = $Pages[$Page]
-            $TitleControl.Text = $pageHash['Title']
-            $ContentControl.Content = $pageHash['Content']
-        }
+        #endregion Functions
+
+        #region Scripts
         $script:setPageContent = {
             param (
                 [int] $Page
@@ -48,34 +35,6 @@ Begin {
             $pageHash = $script:pages[$Page]
             $script:titleBar.Text = $pageHash['Title']
             $script:pageContent.Content = $pageHash['Content']
-        }
-        function Set-Page {
-            [CmdletBinding(DefaultParameterSetName='Next')]
-            param (
-                [Parameter(Mandatory)]
-                $PagesControl,
-                [Parameter(Mandatory, ParameterSetName='Next')]
-                [switch] $Next,
-                [Parameter(Mandatory, ParameterSetName='Previous')]
-                [switch] $Previous
-            )
-            $currentPage = $PagesControl.Tag['Page']
-            $minimum = 0
-            $maximum = $PagesControl.Tag['Pages'].Count - 1
-            if ($Next) {
-                $newPage = $currentPage + 1
-                if ($newPage -gt $maximum) {
-                    return
-                }
-            }
-            if ($Previous) {
-                $newPage = $currentPage - 1
-                if ($newPage -lt $minimum) {
-                    return
-                }
-            }
-            Set-PageContent -Page $newPage
-            $PagesControl.Tag['Page'] = $newPage
         }
         $script:setPage = {
             param (
@@ -100,13 +59,14 @@ Begin {
             . $script:setPageContent -Page $newPage
             $script:content.Tag['Page'] = $newPage
         }
-        #endregion Functions
+        $closeWindow = { $window.Close() }
+        #endregion Scripts
 
         # Create the window
-        $window = [Window] @{
+        $script:window = [Window] @{
             Title = "Cowriter Setup"
-            Width = 600
-            Height = 400
+            Width = 700
+            Height = 500
             WindowStartupLocation = "CenterScreen"
             Topmost = $true
             FontSize = 16
@@ -152,26 +112,66 @@ Begin {
 
         # Pages
         # This is the structure of each page in the wizard
+        
+        # Introduction page
         $introduction = @{
             Title = 'Introduction'
             Content = [TextBlock] @{
                 Text = "Welcome to the Cowriter Setup Wizard.`n`nThis wizard will guide you through the installation of Cowriter and its dependencies."
                 TextWrapping = "Wrap"
-                Margin = "10"
+                Margin = 10
             }
         }
-        $secondPage = @{
-            Title = 'Second page'
-            Content = [TextBlock] @{
-                Text = "This is the second page."
-                TextWrapping = "Wrap"
-                Margin = "10"
-            }
+
+        # Dependencies page
+        $dependenciesPage = [StackPanel] @{
+            Margin = 10
+            Orientation = "Vertical"
+            VerticalAlignment = "Stretch"
+        }
+
+        # Dependencies already installed/satisfied
+        $satisfiedDependencies = [StackPanel] @{
+            # Hide by default. This is unhidden if dependencies are found to be installed
+            Visibility = "Hidden"
+        }
+        [void] $satisfiedDependencies.Children.Add([TextBlock] @{
+            Text = "The following dependencies are already installed"
+            FontWeight = "Bold"
+        })
+        $satisfiedDependenciesList = [ListBox]::new()
+        [void] $satisfiedDependenciesList.Items.Add("Cowriter module")
+        [void] $satisfiedDependenciesList.Items.Add("Ollama")
+        [void] $satisfiedDependenciesList.Items.Add("AI model")
+        [void] $satisfiedDependencies.Children.Add($satisfiedDependenciesList)
+        
+        # Dependencies not yet installed/satisfied
+        $unsatisfiedDependencies = [StackPanel] @{
+            Margin = "0,30,0,0"
+            # Hide by default. This is unhidden if dependencies are found to not be installed
+            Visibility = "Hidden"
+        }
+        [void] $unsatisfiedDependencies.Children.Add([TextBlock] @{
+            Text = "The following dependencies will be installed"
+            FontWeight = "Bold"
+        })
+        $unsatisfiedDependenciesList = [ListBox]::new()
+        [void] $unsatisfiedDependenciesList.Items.Add("Cowriter module")
+        [void] $unsatisfiedDependenciesList.Items.Add("Ollama")
+        [void] $unsatisfiedDependenciesList.Items.Add("AI model")
+        [void] $unsatisfiedDependencies.Children.Add($unsatisfiedDependenciesList)
+
+        # Assemble dependencies page
+        [void] $dependenciesPage.Children.Add($satisfiedDependencies)
+        [void] $dependenciesPage.Children.Add($unsatisfiedDependencies)
+        $dependencies = @{
+            Title = 'Dependencies'
+            Content = $dependenciesPage
         }
 
         $script:pages = @(
             $introduction,
-            $secondPage
+            $dependencies
         )
 
         # Bottom navigation buttons
@@ -197,8 +197,8 @@ Begin {
             Margin = "10,0,0,0"
         }
         $zoomOutButton.Add_Click({
-            if ($window.FontSize -gt $window.Tag['MinFontSize']) {
-                $window.FontSize -= 2
+            if ($script:window.FontSize -gt $script:window.Tag['MinFontSize']) {
+                $script:window.FontSize -= 2
             }
         })
         [void] $zoomPanel.Children.Add($zoomOutButton)
@@ -209,8 +209,8 @@ Begin {
             Margin = "5,0,0,0"
         }
         $zoomInButton.Add_Click({
-            if ($window.FontSize -lt $window.Tag['MaxFontSize']) {
-                $window.FontSize += 2
+            if ($script:window.FontSize -lt $script:window.Tag['MaxFontSize']) {
+                $script:window.FontSize += 2
             }
         })
         [void] $zoomPanel.Children.Add($zoomInButton)
@@ -245,7 +245,7 @@ Begin {
             Width = 80
             Margin = "0,0,10,0"
         }
-        [void] $cancelButton.Add_Click({ $window.Close() })
+        [void] $cancelButton.Add_Click($closeWindow)
         [void] $buttonPanel.Children.Add($cancelButton)
 
         # Set the first page content to start
