@@ -2,7 +2,8 @@ function Start-Cowriter {
     [Alias('Cowriter')]
     [CmdletBinding()]
     param (
-        [string] $Xaml = "$PSScriptRoot/files/xaml/cowriter.xaml"
+        [string] $Xaml = "$PSScriptRoot/files/xaml/cowriter.xaml",
+        [uri] $OllamaUrl = 'http://127.0.0.1:11434'
     )
     Add-Type -AssemblyName PresentationFramework
 
@@ -53,47 +54,38 @@ function Start-Cowriter {
         $mainText.Selection.ApplyPropertyValue([System.Windows.Documents.Inline]::TextDecorationsProperty, [System.Windows.TextDecorations]::Underline)
     })
 
-    <#
-    # Bulleted List
-    $bulletButton.Add_Click({
-        $para = $mainText.Selection.Start.Paragraph
-        if ($para -and -not $para.List) {
-            $list = New-Object System.Windows.Documents.List
-            $list.MarkerStyle = [System.Windows.TextMarkerStyle]::Disc
-            $list.ListItems.Add((New-Object System.Windows.Documents.ListItem($para)))
-            $mainText.Document.Blocks.InsertBefore($para, $list)
-            $mainText.Document.Blocks.Remove($para)
-        }
+    $script:chatInput = $window.FindName('ChatInput')
+    $script:sendButton = $window.FindName('SendButton')
+    $sendButton.Add_Loaded({
+        $this.IsEnabled = $false
+    })
+    $chatInput.Add_TextChanged({
+        $script:sendButton.IsEnabled = -not [string]::IsNullOrWhiteSpace($script:chatInput.Text)
     })
 
-    # Numbered List
-    $numberButton.Add_Click({
-        $para = $mainText.Selection.Start.Paragraph
-        if ($para -and -not $para.List) {
-            $list = New-Object System.Windows.Documents.List
-            $list.MarkerStyle = [System.Windows.TextMarkerStyle]::Decimal
-            $list.ListItems.Add((New-Object System.Windows.Documents.ListItem($para)))
-            $mainText.Document.Blocks.InsertBefore($para, $list)
-            $mainText.Document.Blocks.Remove($para)
-        }
-    })
-    #>
-
-    $chatHistory = $window.FindName('ChatHistory')
-    function Add-ChatBubble {
-        [CmdletBinding()]
+    $script:chatHistory = $window.FindName('ChatHistory')
+    $script:addChatBubble = {
         param (
+            [Parameter(Position=0)]
             [string] $Message,
-            [System.Windows.Media.SolidColorBrush] $Background = [System.Windows.Media.Brushes]::LightBlue,
-            [System.Windows.Controls.StackPanel] $ChatPanel,
+            [ValidateSet('User','AI')]
+            [string] $Type = 'User',
             [int] $CornerRadius = 10,
             [int] $Padding = 8,
             [int] $Margin = 4,
-            [System.Windows.HorizontalAlignment] $HorizontalAlignment = 'Right',
             [int] $MaxWidth = 200,
-            [System.Windows.TextWrapping] $TextWrapping = 'Wrap'
+            [System.Windows.TextWrapping] $TextWrapping = 'Wrap',
+            $ChatHistory = $script:chatHistory
         )
-        $ChatPanel.AddChild(
+        $Background = switch ($Type) {
+            'User' { 'LightBlue' }
+            'AI'   { 'LightGray' }
+        }
+        [System.Windows.HorizontalAlignment] $HorizontalAlignment = switch ($Type) {
+            'User' { 'Right' }
+            'AI'   { 'Left' }
+        }
+        $ChatHistory.AddChild(
             [System.Windows.Controls.Border] @{
                 CornerRadius = $CornerRadius
                 Padding = $Padding
@@ -105,9 +97,37 @@ function Start-Cowriter {
                     Text = $Message
                     TextWrapping = $TextWrapping
                 }
+                Tag = @{
+                    Type = $Type
+                }
             }
         )
     }
+    $script:addUserBubble = {
+        param ($Message)
+        . $script:addChatBubble -Message $Message
+    }
+    $script:addAIBubble = {
+        param ($Message)
+        . $script:addChatBubble -Message $Message -Background LightGray -HorizontalAlignment Left
+    }
+    $sendButton.Add_Click({
+        if ([string]::IsNullOrWhiteSpace($script:chatInput.Text)) {
+            return
+        }
+        . $script:addChatBubble -Type User -Message $script:chatInput.Text
+        $script:chatInput.Clear()
+        start-sleep -sec 10
+        . $script:addChatBubble -Type AI -Message 'This is a placeholder response from the AI.' -ChatHistory $script:chatHistory
+    })
+    $chatInput.Add_KeyDown({
+        param($sender, $e)
+        if ($e.Key -eq [System.Windows.Input.Key]::Enter) {
+            # Your action here, e.g. send message
+            [System.Windows.MessageBox]::Show("Enter pressed!")
+            $e.Handled = $true  # Optional: prevents beep or further processing
+        }
+    })
 
     # Show window
     $window.ShowDialog()
