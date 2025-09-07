@@ -76,14 +76,7 @@
         <!-- (Optional) Chat history area could go here in Row 0 -->
         <!-- Chat history area (scrollable) -->
         <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Name="ChatScroll">
-          <StackPanel Name="ChatHistory" Margin="0,0,0,8">
-            <Border Background="#D0F0FF" CornerRadius="10" Padding="8" Margin="4" HorizontalAlignment="Right" MaxWidth="200">
-              <TextBlock Text="You: Hello!" TextWrapping="Wrap"/>
-            </Border>
-            <Border Background="#E0E0E0" CornerRadius="10" Padding="8" Margin="4" HorizontalAlignment="Left" MaxWidth="200">
-              <TextBlock Text="Me: Hi there!" TextWrapping="Wrap"/>
-            </Border>
-          </StackPanel>
+          <StackPanel Name="ChatHistory" Margin="0,0,0,8"/>
         </ScrollViewer>
         <!-- Chat input and send button at the bottom -->
         <StackPanel Grid.Row="1" Orientation="Horizontal">

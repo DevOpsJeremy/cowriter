@@ -10,7 +10,7 @@ function Start-Cowriter {
     # Load XAML
     [xml]$xaml = Get-Content -Raw -Path $Xaml
     $reader = (New-Object System.Xml.XmlNodeReader $xaml)
-    $window = [Windows.Markup.XamlReader]::Load($reader)
+    $script:window = [Windows.Markup.XamlReader]::Load($reader)
     $mainText = $window.FindName("MainText")
     $lineNumbers = $window.FindName("LineNumbers")
 
@@ -103,29 +103,42 @@ function Start-Cowriter {
             }
         )
     }
-    $script:addUserBubble = {
-        param ($Message)
-        . $script:addChatBubble -Message $Message
-    }
-    $script:addAIBubble = {
-        param ($Message)
-        . $script:addChatBubble -Message $Message -Background LightGray -HorizontalAlignment Left
-    }
-    $sendButton.Add_Click({
+
+    $script:sendMessage = {
         if ([string]::IsNullOrWhiteSpace($script:chatInput.Text)) {
             return
         }
-        . $script:addChatBubble -Type User -Message $script:chatInput.Text
+        $message = $script:chatInput.Text
+        $script:sendButton.IsEnabled = $false
+        . $script:addChatBubble -Type User -Message $message
         $script:chatInput.Clear()
-        start-sleep -sec 10
-        . $script:addChatBubble -Type AI -Message 'This is a placeholder response from the AI.' -ChatHistory $script:chatHistory
-    })
+        $ps = [System.Management.Automation.PowerShell]::Create()
+                    $script:chatHistory.AddChild([System.Windows.Controls.TextBlock] @{
+                Text = 'Hello one' # $result.response
+                TextWrap = 'Wrap'
+            })
+
+            $ps.AddScript({
+            param ($panel)
+            # $body = @{
+            #     model = 'llama3.2'
+            #     stream = $false
+            #     prompt = $message
+            # } | ConvertTo-Json -Depth 100 -Compress
+            # # Simulate REST request (replace with your Invoke-RestMethod)
+            # $result = Invoke-RestMethod -Uri 'http://127.0.0.1:11434' -Method post -Body $body
+            $panel.AddChild([System.Windows.Controls.TextBlock] @{
+                Text = 'Hello back' # $result.response
+                TextWrap = 'Wrap'
+            })
+        }).AddParameter('panel', $script:chatHistory).Invoke()
+    }
+    $sendButton.Add_Click($sendMessage)
     $chatInput.Add_KeyDown({
         param($sender, $e)
-        if ($e.Key -eq [System.Windows.Input.Key]::Enter) {
-            # Your action here, e.g. send message
-            [System.Windows.MessageBox]::Show("Enter pressed!")
-            $e.Handled = $true  # Optional: prevents beep or further processing
+        if ($e.Key -in [System.Windows.Input.Key]::Enter, [System.Windows.Input.Key]::Return) {
+            $script:sendMessage.Invoke()
+            $e.Handled = $true
         }
     })
 
