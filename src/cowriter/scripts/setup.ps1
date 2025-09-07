@@ -48,6 +48,10 @@ Begin {
             $minimum = 0
             $maximum = $script:content.Children.Count - 1
             if ($Next) {
+                [Windows.MessageBox]::Show("Next button clicked
+                Current page: $currentPage
+                Max pages: $maximum
+                ")
                 $newPage = $currentPage + 1
                 if ($newPage -gt $maximum) {
                     return
@@ -59,7 +63,7 @@ Begin {
                     return
                 }
             }
-            . $script:setPageContent -Page $newPage
+            & $script:setPageContent -Page $newPage
             $script:content.Tag['Page'] = $newPage
         }
         $script:closeWindow = { $script:window.Close() }
@@ -78,6 +82,7 @@ Begin {
                 MaxFontSize = $MaxFontSize
             }
         }
+        $window.Add_Loaded({ $window.Topmost = $false })
 
         #region Main Content
         # Grids for the main area + navigation buttons
@@ -145,6 +150,9 @@ Begin {
             }
             return $true
         }
+        $script:installModule = {
+            Install-Module -Name 'Cowriter' -Scope CurrentUser -Force -AllowClobber
+        }
         $script:checkOllama = {
             # Check that `ollama.exe` is found and in $PATH
             $ollama = Get-Command 'ollama' -ErrorAction SilentlyContinue
@@ -152,6 +160,12 @@ Begin {
                 return $false
             }
             return $true
+        }
+        $script:installOllama = {
+            $tmp = [IO.Path]::GetTempPath()
+            $output = [IO.Path]::Combine($tmp, 'ollamaSetup.exe')
+            Invoke-WebRequest -Uri $OllamaDownloadUrl -OutFile $output
+            & $output /SILENT
         }
         $script:checkModel = {
             $ollama = Get-Command 'ollama' -ErrorAction SilentlyContinue
@@ -169,18 +183,29 @@ Begin {
             }
             return $true
         }
+        $script:installModel = {
+            $ollama = Get-Command 'ollama' -ErrorAction SilentlyContinue
+            if (-not $ollama) {
+                throw "Ollama is not installed. Cannot install model."
+            }
+            # Pull the model - `ollama pull llama3.2`
+            & $ollama.Source pull llama3.2
+        }
         $script:depHash = [Ordered] @{
             module = @{
                 Name = 'Cowriter'
-                Script = $script:checkModule
+                CheckScript = $script:checkModule
+                InstallScript = $script:installModule
             }
             ollama = @{
                 Name = 'Ollama'
-                Script = $script:checkOllama
+                CheckScript = $script:checkOllama
+                InstallScript = $script:installOllama
             }
             model = @{
                 Name = 'AI Model'
-                Script = $script:checkModel
+                CheckScript = $script:checkModel
+                InstallScript = $script:installOllama
             }
         }
         # Check if we've already checked for dependencies
@@ -194,7 +219,7 @@ Begin {
             $script:unsatisfiedDependenciesList.Items.Clear()
             $depStatus = @{}
             foreach ($dependency in $script:depHash.GetEnumerator()) {
-                $depStatus[$dependency.Key] = & $dependency.Value['Script']
+                $depStatus[$dependency.Key] = & $dependency.Value['CheckScript']
             }
             foreach ($dependency in $depStatus.GetEnumerator()) {
                 switch ($dependency.Value) {
@@ -216,7 +241,7 @@ Begin {
             $script:dependenciesChecked = $true
         }
         # Check the dependencies at launch to save processing time
-        $window.Add_Loaded({ . $script:checkDependencies })
+        $dependenciesPage.Add_Loaded({ . $script:checkDependencies })
 
         # Dependencies already installed/satisfied
         $script:satisfiedDependencies = [StackPanel] @{
@@ -250,10 +275,26 @@ Begin {
             Title = 'Dependencies'
             Content = $dependenciesPage
         }
+        
+        # Installation page
+        $script:installationPage = [StackPanel] @{
+            Margin = 10
+            Orientation = "Vertical"
+            VerticalAlignment = "Stretch"
+        }
+        $installing = @{
+            Title = 'Installing'
+            Content = [TextBlock] @{
+                Text = "Click 'Next' to begin the installation of any missing dependencies. This may take several minutes depending on your internet connection and system performance."
+                TextWrapping = "Wrap"
+                Margin = 10
+            }
+        }
 
         $script:pages = @(
             $introduction,
-            $dependencies
+            $dependencies,
+            $installing
         )
 
         # Bottom navigation buttons
@@ -306,7 +347,7 @@ Begin {
         [void] [Grid]::SetColumn($buttonPanel, 1)
         [void] $navGrid.Children.Add($buttonPanel)
 
-        $backButton = [Button] @{
+        $script:backButton = [Button] @{
             Content = "Back"
             Width = 80
             Margin = "0,0,10,0"
@@ -314,7 +355,7 @@ Begin {
         $backButton.Add_Click({ . $script:setPage -Previous })
         [void] $buttonPanel.Children.Add($backButton)
 
-        $nextButton = [Button] @{
+        $script:nextButton = [Button] @{
             Content = "Next"
             Width = 80
             Margin = "0,0,10,0"

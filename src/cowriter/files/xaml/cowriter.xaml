@@ -35,7 +35,7 @@
       <!-- Define three columns -->
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*"/>
-        <ColumnDefinition MaxWidth="275"/>
+        <ColumnDefinition MaxWidth="500"/>
       </Grid.ColumnDefinitions>
 
       <Grid Grid.Column="0" Margin="8,0,8,0">
@@ -79,8 +79,8 @@
           <StackPanel Name="ChatHistory" Margin="0,0,0,8"/>
         </ScrollViewer>
         <!-- Chat input and send button at the bottom -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal">
-          <TextBox Name="ChatInput" Width="180" Height="30" Margin="5,0,5,0" ToolTip="Ask a question"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Stretch">
+          <TextBox Name="ChatInput" HorizontalAlignment="Stretch" Width="405" Height="30" Margin="5,0,5,0" ToolTip="Ask a question"/>
           <Button Name="SendButton" Content="Send" Width="80" Height="30"/>
         </StackPanel>
       </Grid>

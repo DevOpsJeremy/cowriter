@@ -3,7 +3,8 @@ function Start-Cowriter {
     [CmdletBinding()]
     param (
         [string] $Xaml = "$PSScriptRoot/files/xaml/cowriter.xaml",
-        [uri] $OllamaUrl = 'http://127.0.0.1:11434'
+        [string] $OllamaUrl = 'http://127.0.0.1:11434/api',
+        [string] $SystemPrompt = "$PSScriptRoot/files/prompts/system.txt"
     )
     Add-Type -AssemblyName PresentationFramework
 
@@ -64,6 +65,11 @@ function Start-Cowriter {
     })
 
     $script:chatHistory = $window.FindName('ChatHistory')
+    $chatHistory.Tag = @{ Messages = [System.Collections.ArrayList]::new() }
+    [void] $chatHistory.Tag['Messages'].Add(@{
+        role = 'system'
+        content = [string] (Get-Content $SystemPrompt)
+    })
     $script:addChatBubble = {
         param (
             [Parameter(Position=0)]
@@ -73,7 +79,7 @@ function Start-Cowriter {
             [int] $CornerRadius = 10,
             [int] $Padding = 8,
             [int] $Margin = 4,
-            [int] $MaxWidth = 200,
+            [int] $MaxWidth = 400,
             [System.Windows.TextWrapping] $TextWrapping = 'Wrap',
             $ChatHistory = $script:chatHistory
         )
@@ -112,26 +118,59 @@ function Start-Cowriter {
         $script:sendButton.IsEnabled = $false
         . $script:addChatBubble -Type User -Message $message
         $script:chatInput.Clear()
-        $ps = [System.Management.Automation.PowerShell]::Create()
-                    $script:chatHistory.AddChild([System.Windows.Controls.TextBlock] @{
-                Text = 'Hello one' # $result.response
-                TextWrap = 'Wrap'
+        [void] $script:chatHistory.Tag['Messages'].Add(@{
+            role = 'user'
+            content = $message
+        })
+        [System.Management.Automation.PowerShell]::Create().AddScript({
+            param (
+                $w,
+                $ch,
+                $q,
+                $m = 'llama3.2',
+                $OllamaUrl,
+                $ml
+            )
+            $body = @{
+                model = $m
+                messages = $ml
+                # prompt = $q
+                stream = $false
+            } | ConvertTo-Json -Depth 10 -Compress
+            try {
+                $result = Invoke-RestMethod "$OllamaUrl/chat" -method post -body $body -ErrorAction Stop
+                $message = $result.message
+                $content = $message.content
+            } catch {
+                $content = "Error: $($_.Exception.Message)"
+            }
+            $w.Dispatcher.Invoke({
+                $ch.AddChild(
+                    [System.Windows.Controls.Border] @{
+                        CornerRadius = 10
+                        Padding = 8
+                        Margin = 4
+                        HorizontalAlignment = 'Left'
+                        Background = 'LightGray'
+                        MaxWidth = 400
+                        Child = [System.Windows.Controls.TextBlock] @{
+                            Text = $content
+                            TextWrapping = 'Wrap'
+                        }
+                        Tag = @{
+                            Type = 'AI'
+                        }
+                    }
+                )
+                [void] $ch.Tag['Messages'].Add($message)
             })
-
-            $ps.AddScript({
-            param ($panel)
-            # $body = @{
-            #     model = 'llama3.2'
-            #     stream = $false
-            #     prompt = $message
-            # } | ConvertTo-Json -Depth 100 -Compress
-            # # Simulate REST request (replace with your Invoke-RestMethod)
-            # $result = Invoke-RestMethod -Uri 'http://127.0.0.1:11434' -Method post -Body $body
-            $panel.AddChild([System.Windows.Controls.TextBlock] @{
-                Text = 'Hello back' # $result.response
-                TextWrap = 'Wrap'
-            })
-        }).AddParameter('panel', $script:chatHistory).Invoke()
+        }).AddParameters(@{
+            w = $script:window
+            ch = $script:chatHistory
+            q = $message
+            OllamaUrl = $OllamaUrl
+            ml = $script:chatHistory.Tag['Messages']
+        }).BeginInvoke()
     }
     $sendButton.Add_Click($sendMessage)
     $chatInput.Add_KeyDown({
