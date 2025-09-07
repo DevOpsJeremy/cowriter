@@ -5,15 +5,9 @@ param (
     [string] $UriHost = 'raw.githubusercontent.com',
     [string] $Repo = 'DevOpsJeremy/cowriter',
     [string] $Ref = 'main',
-    [string] $Script = 'src/scripts/setup.ps1',
-    # TODO: Remove
-    [string] $Authorization
+    [string] $Script = 'src/scripts/setup.ps1'
 )
 Begin {
-    # TODO: Remove
-    $PSDefaultParameterValues = @{
-        'Invoke-RestMethod:Headers' = @{ Authorization = $Authorization }
-    }
     #region Functions
     function ConvertTo-Base64String {
         [CmdletBinding()]
