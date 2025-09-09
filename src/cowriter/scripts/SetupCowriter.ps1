@@ -5,7 +5,7 @@ param (
     [string] $UriHost = 'raw.githubusercontent.com',
     [string] $Repo = 'DevOpsJeremy/cowriter',
     [string] $Ref = 'main',
-    [string] $Script = 'src/scripts/setup.ps1'
+    [string] $Script = 'src/cowriter/scripts/setup.ps1'
 )
 Begin {
     #region Functions
@@ -31,5 +31,7 @@ Process {
         exit 1
     }
     $encoded = ConvertTo-Base64String $script
-    Start-Process (Get-Command powershell).Source @("-EncodedCommand", "$encoded", "-WindowStyle", "Minimized")
+    return $encoded
+    #echo "Start-Process (Get-Command powershell).Source @(-EncodedCommand, $encoded, -WindowStyle, Hidden)"
+    #Start-Process (Get-Command powershell).Source @("-EncodedCommand", "$encoded", "-WindowStyle", "Hidden")
 }

@@ -10,6 +10,7 @@ param (
 Begin {
     # Add the Windows Presentation Foundation framework for the window
     Add-Type -Assembly PresentationFramework
+    $script:appName = 'Cowriter'
 
     #region Functions
     function Get-RemoteFileSize {
@@ -46,12 +47,8 @@ Begin {
             )
             $currentPage = $script:content.Tag['Page']
             $minimum = 0
-            $maximum = $script:content.Children.Count - 1
+            $maximum = $script:pages.Count - 1
             if ($Next) {
-                [Windows.MessageBox]::Show("Next button clicked
-                Current page: $currentPage
-                Max pages: $maximum
-                ")
                 $newPage = $currentPage + 1
                 if ($newPage -gt $maximum) {
                     return
@@ -65,13 +62,26 @@ Begin {
             }
             & $script:setPageContent -Page $newPage
             $script:content.Tag['Page'] = $newPage
+            if ($newPage -eq $minimum) {
+                $script:backButton.IsEnabled = $false
+            } else {
+                $script:backButton.IsEnabled = $true
+            }
+            if ($newPage -eq $maximum) {
+                $script:nextButton.Content = "Finish"
+                $script:nextButton.Add_Click($script:closeWindowEH)
+            } else {
+                $script:nextButton.Content = "Next"
+                $script:nextButton.Remove_Click($script:closeWindowEH)
+            }
         }
         $script:closeWindow = { $script:window.Close() }
+        $script:closeWindowEH = [Windows.RoutedEventHandler] $closeWindow
         #endregion Scripts
 
         # Create the window
         $script:window = [Window] @{
-            Title = "Cowriter Setup"
+            Title = "${script:appName} Setup"
             Width = 700
             Height = 500
             WindowStartupLocation = "CenterScreen"
@@ -126,7 +136,7 @@ Begin {
         $introduction = @{
             Title = 'Introduction'
             Content = [TextBlock] @{
-                Text = "Welcome to the Cowriter Setup Wizard.`n`nThis wizard will guide you through the installation of Cowriter and its dependencies."
+                Text = "Welcome to the ${script:appName} Setup Wizard.`n`nThis wizard will guide you through the installation of ${script:appName} and its dependencies."
                 TextWrapping = "Wrap"
                 Margin = 10
             }
@@ -142,16 +152,17 @@ Begin {
             }
         }
 
+        $script:moduleName = $script:appName
         $script:checkModule = {
             # Check that the Cowriter module (this) is installed
-            $module = Get-Module -Name 'Cowriter' -ListAvailable
+            $module = Get-Module -Name $script:moduleName -ListAvailable
             if (-not $module) {
                 return $false
             }
             return $true
         }
         $script:installModule = {
-            Install-Module -Name 'Cowriter' -Scope CurrentUser -Force -AllowClobber
+            Install-Module -Name $script:moduleName -Scope CurrentUser -Force -AllowClobber
         }
         $script:checkOllama = {
             # Check that `ollama.exe` is found and in $PATH
@@ -172,13 +183,13 @@ Begin {
             if (-not $ollama) {
                 return $false
             }
-            # List models - `ollama ls`
-            $models = & $ollama.Source ls
-            # If 1 element is returned, its the header row:
-            # NAME  ID  SIZE  MODIFIED
-            #
-            # Any additional rows are models
-            if ($models.Count -le 1) {
+            # List models
+            try {
+                $models = (Invoke-RestMethod http://127.0.0.1:11434/api/tags -ErrorAction Stop).models
+            } catch {
+                return $false
+            }
+            if ($models.Count -lt 1) {
                 return $false
             }
             return $true
@@ -193,7 +204,7 @@ Begin {
         }
         $script:depHash = [Ordered] @{
             module = @{
-                Name = 'Cowriter'
+                Name = $script:moduleName
                 CheckScript = $script:checkModule
                 InstallScript = $script:installModule
             }
@@ -277,24 +288,51 @@ Begin {
         }
         
         # Installation page
-        $script:installationPage = [StackPanel] @{
+        $installingPage = [StackPanel] @{
             Margin = 10
             Orientation = "Vertical"
             VerticalAlignment = "Stretch"
         }
+        $script:installingPageTitle = [TextBlock] @{
+            FontSize = 18
+            FontWeight = "Bold"
+            # Margin = '10,5,0,5'
+            Height = 30
+        }
+        $script:installingPageBody = [StackPanel]::new()
+        [void] $installingPage.Children.Add($installingPageTitle)
+        [void] $installingPage.Children.Add($installingPageBody)
         $installing = @{
             Title = 'Installing'
-            Content = [TextBlock] @{
-                Text = "Click 'Next' to begin the installation of any missing dependencies. This may take several minutes depending on your internet connection and system performance."
-                TextWrapping = "Wrap"
-                Margin = 10
-            }
+            Content = $installingPage
+        }
+
+        # Complete page
+        $script:completePage = [StackPanel] @{
+            Margin = 10
+            Orientation = "Vertical"
+            VerticalAlignment = "Stretch"
+        }
+        [void] $completePage.Children.Add([TextBlock] @{
+            Text = "Installation is complete!`n`nYou can now start using ${script:appName}."
+            TextWrapping = "Wrap"
+            Margin = 10
+        })
+        [void] $completePage.Children.Add([CheckBox] @{
+            Content = "Launch ${script:appName}"
+            Margin = "60,30,30,0"
+        })
+
+        $complete = @{
+            Title = 'Complete'
+            Content = $completePage
         }
 
         $script:pages = @(
             $introduction,
             $dependencies,
-            $installing
+            $installing,
+            $complete
         )
 
         # Bottom navigation buttons
@@ -351,6 +389,7 @@ Begin {
             Content = "Back"
             Width = 80
             Margin = "0,0,10,0"
+            IsEnabled = $false
         }
         $backButton.Add_Click({ . $script:setPage -Previous })
         [void] $buttonPanel.Children.Add($backButton)
