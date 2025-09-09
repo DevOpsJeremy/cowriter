@@ -1,8 +1,3 @@
-#requires -Version 5.1
-using namespace System.Windows
-using namespace System.Windows.Controls
-using namespace System.Collections
-
 [CmdletBinding()]
 param (
     [uri] $OllamaDownloadUrl = 'https://github.com/ollama/ollama/releases/latest/download/OllamaSetup.exe'

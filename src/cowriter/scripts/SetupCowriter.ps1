@@ -32,6 +32,6 @@ Process {
     }
     $encoded = ConvertTo-Base64String $script
     return $encoded
-    #echo "Start-Process (Get-Command powershell).Source @(-EncodedCommand, $encoded, -WindowStyle, Hidden)"
-    #Start-Process (Get-Command powershell).Source @("-EncodedCommand", "$encoded", "-WindowStyle", "Hidden")
+    # echo "Start-Process (Get-Command powershell).Source @(-EncodedCommand, $encoded, -WindowStyle, Hidden)"
+    # Start-Process (Get-Command powershell).Source @("-EncodedCommand", "$encoded", "-WindowStyle", "Hidden")
 }
